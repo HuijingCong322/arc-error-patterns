@@ -3,10 +3,10 @@ Core error metrics and comparison logic.
 
 Error taxonomy
 --------------
-correct       – exact match with ground truth
-wrong_size    – output dimensions don't match (rows or cols differ)
-close_miss    – right size, cell accuracy >= 0.8
-wrong_content – right size, cell accuracy < 0.8
+correct       - exact match with ground truth
+wrong_size    - output dimensions don't match (rows or cols differ)
+close_miss    - right size, cell accuracy >= 0.8
+wrong_content - right size, cell accuracy < 0.8
 """
 
 import pandas as pd
@@ -73,14 +73,20 @@ def compute_human_errors(
     harc_df,
     ground_truth,
     task_col="task_id",
-    participant_col="participant_id",
-    attempt_col="attempt",
-    grid_col="response_grid",
+    participant_col="hashed_id",
+    attempt_col="attempt_number",
+    grid_col="test_output_grid",
 ):
     """
-    Uses each participant's LAST attempt (most comparable to VARC single prediction).
-    Returns DataFrame with one row per (task_id, participant_id).
-    Columns: task_id, participant_id, error_type, cell_accuracy
+    Uses each participant's LAST attempt per task (most comparable to VARC).
+
+    Default column names match summary_data.csv after load_harc_summary():
+      task_col        = "task_id"         (pre-stripped of .json)
+      participant_col = "hashed_id"
+      attempt_col     = "attempt_number"
+      grid_col        = "test_output_grid"
+
+    Returns DataFrame: task_id, participant_id, error_type, cell_accuracy
     """
     from .load_data import parse_grid
 
@@ -128,7 +134,6 @@ def task_level_summary(human_errors, varc_errors):
         .rename("varc_correct")
     )
     summary = pd.concat([human_acc, varc_correct], axis=1).dropna().reset_index()
-    # agreement: both right or both wrong
     summary["agreement"] = (
         (summary["human_accuracy"] > 0.5) == summary["varc_correct"]
     )

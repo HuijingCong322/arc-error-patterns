@@ -10,7 +10,7 @@ VARC_DIR  = ROOT / "VARC_predictions"
 HARC_DIR  = ROOT / "HARC" / "data"
 
 
-# ── ARC ground truth ─────────────────────────────────────────────────────────
+# ── ARC ground truth ──────────────────────────────────────────────────────────
 
 def load_arc_ground_truth():
     """dict[task_id -> list[grid]]  (one grid per test example)"""
@@ -44,43 +44,60 @@ def load_varc_predictions():
     return result
 
 
-# ── H-ARC human responses ─────────────────────────────────────────────────────
-
-def load_harc_responses():
-    """
-    Returns raw DataFrame from H-ARC CSVs.
-
-    H-ARC OSF layout (https://osf.io/c73kw/):
-      HARC/data/
-        ├── responses.csv     ← main file: one row per attempt
-        ├── tasks.csv
-        └── participants.csv
-
-    Key columns expected in responses.csv:
-      task_id, participant_id, attempt (1-3), is_correct, response_grid (JSON string)
-
-    Run `df.columns.tolist()` after loading to verify column names.
-    """
-    candidates = ["responses.csv", "arc_responses.csv", "results.csv", "data.csv"]
-    for name in candidates:
-        path = HARC_DIR / name
-        if path.exists():
-            df = pd.read_csv(path)
-            print(f"Loaded H-ARC: {path.name}  shape={df.shape}")
-            return df
-
-    available = [p.name for p in HARC_DIR.glob("*.csv")]
-    raise FileNotFoundError(
-        f"H-ARC responses CSV not found in {HARC_DIR}\n"
-        f"Files present: {available}\n"
-        "Update `candidates` list above with the correct filename."
-    )
-
+# ── Grid parsing ──────────────────────────────────────────────────────────────
 
 def parse_grid(value):
-    """Parse a grid stored as JSON string or return as-is if already a list."""
+    """
+    Parse H-ARC pipe-encoded grid string into a 2-D int list.
+
+    Format:  |012|345|678|
+    Returns: [[0,1,2],[3,4,5],[6,7,8]]
+    Also handles JSON-list strings and plain list objects.
+    """
     if value is None or (isinstance(value, float)):
         return None
     if isinstance(value, list):
         return value
+    value = str(value).strip()
+    if value.startswith("|"):
+        rows = [r for r in value.split("|") if r]
+        return [[int(c) for c in row] for row in rows]
     return json.loads(value)
+
+
+# ── H-ARC human responses ─────────────────────────────────────────────────────
+
+def load_harc_summary():
+    """
+    Load summary_data.csv — one row per participant attempt.
+
+    Columns used downstream:
+      task_name       e.g. "6e19193c.json"  → strip ".json" for task_id
+      hashed_id       participant identifier
+      attempt_number  1 / 2 / 3
+      solved          "true" / "false"
+      test_output_grid  pipe-encoded grid string
+      task_type       filter to "evaluation" for the 400-task set
+    """
+    path = HARC_DIR / "summary_data.csv"
+    df = pd.read_csv(path)
+    df = df[df["task_type"] == "evaluation"].copy()
+    df["task_id"] = df["task_name"].str.replace(".json", "", regex=False)
+    print(f"H-ARC summary_data: {len(df)} rows, {df['task_id'].nunique()} tasks, "
+          f"{df['hashed_id'].nunique()} participants")
+    return df
+
+
+def load_harc_incorrect_submissions():
+    """
+    Load incorrect_submissions.csv — aggregated wrong answers per task.
+
+    Columns:
+      task_name, task_type, test_output_grid (pipe-encoded), count
+    Returns only evaluation tasks.
+    """
+    path = HARC_DIR / "incorrect_submissions.csv"
+    df = pd.read_csv(path)
+    df = df[df["task_type"] == "evaluation"].copy()
+    df["task_id"] = df["task_name"].str.replace(".json", "", regex=False)
+    return df
