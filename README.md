@@ -23,6 +23,9 @@ pip install huggingface_hub numpy pandas matplotlib
 对我们的项目来说，只需要：
 HARC/data/incorrect_submissions.csv — 每道题上所有人的错误答案汇总，这就是"人类错误数据"
 
+###4.运行notebook文件夹下的compare_errors.ipynb
+我加了一点结果解释,运行结果在result文件夹
+
 ## Folder Structure
 arc-error-patterns/
 ├── data/
