@@ -14,15 +14,14 @@ git clone https://github.com/你的用户名/arc-error-patterns.git
 pip install huggingface_hub numpy pandas matplotlib
 
 ### 3. Download data
-
-ARC original tasks:
-git clone https://github.com/fchollet/ARC-AGI.git
-
-VARC predictions:
-huggingface-cli download VisionARC/VARC_predictions --repo-type dataset --local-dir ./VARC_predictions
-
-H-ARC human data:
-huggingface-cli download harc-dataset/H-ARC --repo-type dataset --local-dir ./HARC
+运行download_data.py，下载ARC 原始任务和 VARC 预测数据
+但需手动下载 H-ARC（只需做一次）
+第一步：打开 OSF 页面
+浏览器打开：https://osf.io/bh8yq
+第二步：下载 zip 文件
+点击页面上的 "OSF Storage" → 找到 osfstorage-archive.zip → 点击下载
+对我们的项目来说，只需要：
+HARC/data/incorrect_submissions.csv — 每道题上所有人的错误答案汇总，这就是"人类错误数据"
 
 ## Folder Structure
 arc-error-patterns/
@@ -31,20 +30,30 @@ arc-error-patterns/
 ├── notebooks/
 └── results/
 
-✅ VARC 完整资源汇总
-论文
-标题：ARC Is a Vision Problem!
-arXiv 链接：https://arxiv.org/abs/2511.14761
+## 代码结构
 
-官方代码仓库（最重要）
-GitHub：https://github.com/lillian039/VARC
+analysis/load_data.py — 三个数据集的加载函数
+- load_arc_ground_truth() → 400个任务的标准答案
+- load_varc_predictions() → 自动 majority vote，返回最终预测
+- load_harc_responses() → 加载 H-ARC CSV，自动尝试常见文件名
 
-🎉 预测数据已公开！
-官方仓库直接提供了预测数据，可以用以下命令下载：
-hf download VisionARC/VARC_predictions --local-dir . --repo-type dataset
-unzip VARC_predictions.zip
-这些是 TTT（Test-Time Training）之后对每个任务的预测结果，包含 ARC-1 和 ARC-2 两个版本。
-也就是说，你们不需要自己跑模型，直接下载现成的预测输出就可以用于错误分析！
+analysis/error_analysis.py — 错误分类与对比
+- 四类错误：correct / wrong_size / close_miss / wrong_content
+- compute_varc_errors() 和 compute_human_errors()（只取最后一次尝试）
+- task_level_summary() → 每道题的人类准确率 vs. VARC 对错
 
-模型简介（帮助你们理解数据）
-VARC 把 ARC 任务重新定义为图像到图像的翻译问题（image-to-image translation），把 ARC 网格画在一个 64×64 的"画布"上，用标准视觉架构（ViT 或 U-Net）处理，通过测试时训练（TTT）泛化到未见任务。单个 18M 参数的 ViT 模型在 ARC-1 上达到 54.5% 准确率，集成后达到 60.4%，接近人类平均水平。
+notebooks/compare_errors.ipynb — 分析图
+- 错误类型分布柱状图
+- 每题准确率散点图（四象限）
+- 答错时的 cell accuracy 分布
+
+## 资源
+
+### VARC
+- 论文：[ARC Is a Vision Problem!](https://arxiv.org/abs/2511.14761)
+- 代码：https://github.com/lillian039/VARC
+- 预测数据：`hf download VisionARC/VARC_predictions --local-dir . --repo-type dataset`
+
+### H-ARC
+- 网站：https://exps.gureckislab.org/e/assumption-fast-natural/#/
+- 数据：https://osf.io/bh8yq
