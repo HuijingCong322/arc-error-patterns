@@ -122,15 +122,19 @@ def task_level_summary(human_errors, varc_errors):
     """
     Per-task accuracy for both sources.
     Returns DataFrame: task_id, human_accuracy, varc_correct, agreement
+
+    VARC: task is correct only if ALL test examples are correct (ARC scoring).
+    Human: fraction of participants who got it correct on last attempt.
     """
     human_acc = (
         human_errors.groupby("task_id")["error_type"]
         .apply(lambda x: (x == "correct").mean())
         .rename("human_accuracy")
     )
+    # Aggregate multi-test-example tasks: all must be correct
     varc_correct = (
-        varc_errors.set_index("task_id")["error_type"]
-        .eq("correct")
+        varc_errors.groupby("task_id")["error_type"]
+        .apply(lambda x: (x == "correct").all())
         .rename("varc_correct")
     )
     summary = pd.concat([human_acc, varc_correct], axis=1).dropna().reset_index()
