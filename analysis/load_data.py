@@ -32,15 +32,45 @@ def _majority_vote(grids):
     return [list(row) for row in max(counts, key=counts.get)]
 
 
-def load_varc_predictions():
-    """dict[task_id -> list[grid]]  majority-voted, ordered by test index"""
+def load_varc_predictions(model="ARC-1_ViT"):
+    """
+    dict[task_id -> list[grid]]  majority-voted across all attempts.
+
+    Actual layout after extracting VARC_predictions.zip:
+      VARC_predictions/VARC_predictions/{model}/attempt_0/{task_id}_predictions.json
+                                                 attempt_1/
+                                                 attempt_2/
+                                                 attempt_3/
+
+    Each JSON file: {"0": [grid, grid, ...], "1": [...], ...}
+    We pool all grids from all 4 attempts then majority-vote.
+    """
+    model_dir = VARC_DIR / "VARC_predictions" / model
+    if not model_dir.exists():
+        raise FileNotFoundError(
+            f"Model directory not found: {model_dir}\n"
+            f"Available: {[p.name for p in (VARC_DIR / 'VARC_predictions').iterdir()]}"
+        )
+
+    # Collect all grids per (task_id, test_idx) across every attempt folder
+    all_grids: dict[str, dict[int, list]] = {}
+    for attempt_dir in sorted(model_dir.iterdir()):
+        if not attempt_dir.is_dir():
+            continue
+        for path in attempt_dir.glob("*_predictions.json"):
+            task_id = path.stem.replace("_predictions", "")
+            with open(path) as f:
+                raw = json.load(f)      # {"0": [grid, ...], ...}
+            if task_id not in all_grids:
+                all_grids[task_id] = {}
+            for k, grids in raw.items():
+                idx = int(k)
+                all_grids[task_id].setdefault(idx, []).extend(grids)
+
     result = {}
-    for path in VARC_DIR.glob("*_predictions.json"):
-        task_id = path.stem.replace("_predictions", "")
-        with open(path) as f:
-            raw = json.load(f)          # {"0": [grid, grid, ...], ...}
-        voted = {int(k): _majority_vote(v) for k, v in raw.items()}
-        result[task_id] = [voted[i] for i in range(len(voted))]
+    for task_id, by_idx in all_grids.items():
+        result[task_id] = [_majority_vote(by_idx[i]) for i in range(len(by_idx))]
+    print(f"VARC predictions loaded: {len(result)} tasks (model={model})")
     return result
 
 
