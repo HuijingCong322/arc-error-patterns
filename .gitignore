@@ -1,0 +1,14 @@
+# 数据文件（太大，不放进git）
+VARC_predictions/
+HARC/
+ARC-AGI/
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# 系统文件
+Thumbs.db
+desktop.ini
