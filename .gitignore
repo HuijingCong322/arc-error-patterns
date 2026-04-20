@@ -12,3 +12,6 @@ __pycache__/
 # 系统文件
 Thumbs.db
 desktop.ini
+
+data/raw/
+.DS_Store
