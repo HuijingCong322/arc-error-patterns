@@ -1,0 +1,8 @@
+Total tasks: 400
+H-ARC matches ARC official: 173
+VARC matches ARC official: 129
+
+Both H-ARC and VARC correct: 59
+Both H-ARC and VARC wrong: 157
+Only H-ARC correct: 114
+Only VARC correct: 70
