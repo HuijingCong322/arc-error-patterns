@@ -82,6 +82,46 @@ notebooks/compare_errors.ipynb — 分析图
 - 每题准确率散点图（四象限）
 - 答错时的 cell accuracy 分布
 
+## 语义错误标注
+
+对于人类和 VARC 都答错的任务（`both_wrong`，共 73 道），我们通过人工查看任务图形来分析具体的错误原因，并打上语义标签。
+
+### 错误类型定义
+
+| 标签 | 含义 |
+|------|------|
+| `wrong_position` | 找到了正确的对象或模式，但放错了位置 |
+| `wrong_structure` | 颜色对了，但整体结构或形状错了 |
+| `partial_rule` | 部分理解了规则，但没有完整应用 |
+| `near_miss` | 非常接近正确答案，只差 1-2 个格子或一步变换 |
+| `wrong_rule` | 完全用了错误的规则 |
+| `no_pattern` | 输出看起来像随机填写，没有体现对规则的理解 |
+
+### 如何查看任务
+
+打开 `notebooks/compare_errors.ipynb`，滚动到 **Section 8**。
+
+**第一步** — 运行 `both_wrong_ids` 那个 cell，获取 73 道题的 task_id 列表。
+
+**第二步** — 调用 `show_task()` 可视化任意任务：
+```python
+# 基础视图：训练示例 + 测试输入 + 标准答案
+show_task("ad7e01d0")
+
+# 加上 VARC 预测，与标准答案并排对比
+show_task("ad7e01d0", varc_pred=varc_predictions["ad7e01d0"][0])
+
+# 同时显示 VARC 预测和某位人类的提交
+show_task("ad7e01d0", varc_pred=varc_predictions["ad7e01d0"][0], human_pred=some_grid)
+```
+
+可视化说明：
+- **上排**：输入网格（训练示例的输入 + 测试输入）
+- **下排**：输出网格（训练示例的输出 + 标准答案）
+- 右侧额外列：VARC 预测 和/或 人类提交，用于直接对比
+
+**第三步** — 看完每道题后，在 Section 8 底部的标注表格里填写错误标签和备注。
+
 ## 资源
 
 ### VARC
