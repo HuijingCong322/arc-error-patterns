@@ -82,9 +82,9 @@ notebooks/compare_errors.ipynb — 分析图
 - 每题准确率散点图（四象限）
 - 答错时的 cell accuracy 分布
 
-## 语义错误标注（下一步可能要做的）
+## 语义错误标注
 
-对于人类和 VARC 都答错的任务（`both_wrong`，共 73 道），我们通过人工查看任务图形来分析具体的错误原因，并打上语义标签。
+对于人类和 VARC 都答错的任务（`both_wrong`，共 73 道），我们通过人工查看任务图形来分析具体的错误原因，并打上语义标签。从中抽取 20 道任务（覆盖 human_accuracy 从 0.0 到 0.5 的完整难度梯度）进行人工标注，结果保存在 `results/annotations.csv`，任务可视化图片保存在 `results/task_full_*.png`，生成脚本见 `notebooks/render_tasks.py`。
 
 ### 错误类型定义
 
@@ -121,6 +121,41 @@ show_task("ad7e01d0", varc_pred=varc_predictions["ad7e01d0"][0], max_humans=10)
 - **下两排**：该任务中人类最后一次提交的错误答案（最多 `max_humans` 个，红色标题）
 
 **第三步** — 看完每道题后，在 Section 8 底部的标注表格里填写错误标签和备注。
+
+### 标注结果（20 道样本任务）
+
+| task_id | human_acc | varc_error | human_error | 备注 |
+|---------|-----------|------------|-------------|------|
+| `08573cc6` | 0.286 | `wrong_structure` | `partial_rule` | VARC 颜色对但螺旋尺寸错；人类理解了螺旋概念但细节不准 |
+| `0934a4d8` | 0.111 | `wrong_rule` | `wrong_rule` | 极难压缩任务；双方都完全没理解规则 |
+| `103eff5b` | 0.500 | `wrong_position` | `partial_rule` | VARC 有正确元素但位置错；人类理解形状但没掌握"重力下沉"规则 |
+| `12eac192` | 0.375 | `wrong_rule` | `partial_rule` | VARC 用了错误的颜色映射；人类理解了马赛克结构，颜色对应关系错 |
+| `136b0064` | 0.250 | `wrong_position` | `partial_rule` | VARC 提取了正确元素但位置错；人类理解列结构但位置不对 |
+| `79fb03f4` | 0.000 | `near_miss` | `partial_rule` | VARC 非常接近正确答案；人类尝试水平填充但间距错 |
+| `e6de6e8f` | 0.100 | `near_miss` | `near_miss` | VARC 和多数人类都画出相似形状，只差 1-2 个格子 |
+| `5b692c0f` | 0.143 | `wrong_position` | `partial_rule` | VARC 生物位置/尺寸错；人类识别出两个生物但细节有出入 |
+| `891232d6` | 0.167 | `wrong_rule` | `partial_rule` | VARC 连线方式完全错误；人类知道要连线但连错了路径 |
+| `ad7e01d0` | 0.222 | `wrong_position` | `partial_rule` | VARC 散落正确颜色点但位置错；人类颜色分布对但坐标乱 |
+| `94133066` | 0.250 | `wrong_position` | `partial_rule` | VARC 画出蓝底+形状但位置错；人类理解蓝底但形状错 |
+| `37d3e8b2` | 0.286 | `partial_rule` | `partial_rule` | 双方都理解"按点数填色"但颜色对应关系对不上 |
+| `dc2aa30b` | 0.300 | `near_miss` | `near_miss` | VARC 和人类都非常接近正确答案，蓝/红格子差几个 |
+| `c92b942c` | 0.333 | `wrong_rule` | `wrong_rule` | 极复杂扩展任务；双方都用了完全错误的扩展规则 |
+| `73c3b0d8` | 0.375 | `wrong_position` | `wrong_position` | 都理解红条纹+黄方块结构，但黄方块映射到错误位置 |
+| `2a5f8217` | 0.400 | `wrong_position` | `wrong_position` | 都识别出正确的形状和颜色，但放错了位置 |
+| `85fa5666` | 0.444 | `wrong_position` | `partial_rule` | VARC 扩展了点但位置错；人类理解扩展概念但颜色/位置偏差 |
+| `e5c44e8f` | 0.462 | `wrong_structure` | `near_miss` | VARC 画出螺旋但结构错（变成 G 形）；人类多数非常接近 |
+| `17cae0c1` | 0.500 | `wrong_rule` | `partial_rule` | VARC 用错颜色填充条带；人类理解条带结构但颜色映射错 |
+| `dd2401ed` | 0.500 | `partial_rule` | `partial_rule` | 双方都理解灰色竖条+颜色结构，但颜色格子位置错 |
+
+**标签分布汇总：**
+
+| 标签 | VARC | Human |
+|------|------|-------|
+| `near_miss` | 3 | 3 |
+| `wrong_position` | 7 | 4 |
+| `wrong_structure` | 2 | 0 |
+| `partial_rule` | 3 | 11 |
+| `wrong_rule` | 5 | 2 |
 
 ## 资源
 
