@@ -82,7 +82,7 @@ notebooks/compare_errors.ipynb — 分析图
 - 每题准确率散点图（四象限）
 - 答错时的 cell accuracy 分布
 
-## 语义错误标注
+## 语义错误标注（下一步可能要做的）
 
 对于人类和 VARC 都答错的任务（`both_wrong`，共 73 道），我们通过人工查看任务图形来分析具体的错误原因，并打上语义标签。
 
@@ -105,20 +105,20 @@ notebooks/compare_errors.ipynb — 分析图
 
 **第二步** — 调用 `show_task()` 可视化任意任务：
 ```python
-# 基础视图：训练示例 + 测试输入 + 标准答案
-show_task("ad7e01d0")
-
-# 加上 VARC 预测，与标准答案并排对比
+# 显示任务 + VARC 预测（默认同时显示最多6个人类错误提交）
 show_task("ad7e01d0", varc_pred=varc_predictions["ad7e01d0"][0])
 
-# 同时显示 VARC 预测和某位人类的提交
-show_task("ad7e01d0", varc_pred=varc_predictions["ad7e01d0"][0], human_pred=some_grid)
+# 不显示人类提交（只看任务结构和 VARC）
+show_task("ad7e01d0", varc_pred=varc_predictions["ad7e01d0"][0], max_humans=0)
+
+# 显示更多人类提交
+show_task("ad7e01d0", varc_pred=varc_predictions["ad7e01d0"][0], max_humans=10)
 ```
 
 可视化说明：
-- **上排**：输入网格（训练示例的输入 + 测试输入）
-- **下排**：输出网格（训练示例的输出 + 标准答案）
-- 右侧额外列：VARC 预测 和/或 人类提交，用于直接对比
+
+- **上两排**：训练示例（输入/输出）+ 测试输入 + Ground Truth + VARC预测（绿色标题=对，红色=错）
+- **下两排**：该任务中人类最后一次提交的错误答案（最多 `max_humans` 个，红色标题）
 
 **第三步** — 看完每道题后，在 Section 8 底部的标注表格里填写错误标签和备注。
 
