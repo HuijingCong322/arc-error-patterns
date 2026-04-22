@@ -131,4 +131,5 @@ show_task("ad7e01d0", varc_pred=varc_predictions["ad7e01d0"][0], max_humans=10)
 
 ### H-ARC
 - 网站：https://exps.gureckislab.org/e/assumption-fast-natural/#/
+- https://arc-visualizations.github.io
 - 数据：https://osf.io/bh8yq
