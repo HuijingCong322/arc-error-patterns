@@ -10,5 +10,6 @@ __pycache__/
 .ipynb_checkpoints/
 
 # 系统文件
+.DS_Store
 Thumbs.db
 desktop.ini
