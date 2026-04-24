@@ -5,6 +5,9 @@
 ## Project Overview
 Comparing how humans and the VARC model make mistakes on ARC tasks.
 
+## 一个人看10道人对机器错的题， 总结
+### 写一个脚本，分别随机抽10道题
+
 ## Setup
 
 ### 1. Clone this repo
