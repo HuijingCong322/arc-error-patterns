@@ -24,7 +24,8 @@ pip install huggingface_hub numpy pandas matplotlib
 第二步：下载 zip 文件
 点击页面上的 "OSF Storage" → 找到 osfstorage-archive.zip → 点击下载
 对我们的项目来说，只需要：
-HARC/data/incorrect_submissions.csv — 每道题上所有人的错误答案汇总，这就是"人类错误数据"
+✂️HARC/data/incorrect_submissions.csv — 每道题上所有人的错误答案汇总，这就是"人类错误数据"
+HARC/data/summary_data.csv
 
 ### 4.运行notebook文件夹下的compare_errors.ipynb
 我加了一点结果解释,运行结果在result文件夹
@@ -44,8 +45,9 @@ arc-error-patterns/
 ### VARC 预测（`analysis/load_data.py: load_varc_predictions`）
 - 使用模型：`ARC-1_ViT`（ViT 架构，ARC-1 evaluation set）
 - 读取 `attempt_0` 到 `attempt_3` 共 4 次独立预测
-- 对每道题的所有预测做 **majority vote**（取出现次数最多的网格）作为最终预测
-- 这是 VARC 论文的官方评估方式
+  如果用的是ViT 架构，官方只使用了 `attempt_0`
+- 对每道题的所有预测做 **majority vote**（取出现次数最多2次的网格）作为最终预测 任意一次正确就算正确
+- 这是 VARC 论文的官方评估方式 “pass@2”
 
 ### H-ARC 人类数据（`analysis/load_data.py: load_harc_summary`）
 - 数据来源：`HARC/data/summary_data.csv`，过滤 `task_type == "evaluation"`
@@ -55,7 +57,7 @@ arc-error-patterns/
 - 这样每道题有约 10 个独立数据点，而非单人代表
 
 ### 错误分类（`analysis/error_analysis.py`）
-对每个预测网格与标准答案比较，分为四类：
+✂️对每个预测网格与标准答案比较，分为四类：
 | 类型 | 定义 |
 |------|------|
 | `correct` | 完全匹配 |
@@ -65,6 +67,19 @@ arc-error-patterns/
 
 ### 任务级对比（`task_level_summary`）
 - VARC：所有 test example 全部正确才算该任务正确（ARC 官方评分标准）
+  共400个task，每一个task里面有1～2个test（一般是1个），每个task有对应的prediction.json文件：里面是每个test和与之对应的510个grid结果（510个random view）
+  对于每一个task，里面的test都正确才算这个task正确。怎么算正确？将510个grid结果进行“畅票”，”majority votes“，选出的top 2，任一正确就算正确。
+  - 对于plain ViT on ARC-1，官方用到的是1个文件夹（如下），从510中选top 2
+    VARC_predictions/ARC-1_ViT/attempt_0
+  - 对于ensemble on ARC-1，官方用到的是8个文件夹（如下），从4080（510 * 8）中选top 2
+    VARC_predictions/ARC-1_ViT/attempt_0
+    VARC_predictions/ARC-1_ViT/attempt_1
+    VARC_predictions/ARC-1_ViT/attempt_2
+    VARC_predictions/ARC-1_ViT/attempt_3
+    VARC_predictions/ARC-1_Unet/attempt_0
+    VARC_predictions/ARC-1_Unet/attempt_1
+    VARC_predictions/ARC-1_Unet/attempt_2
+    VARC_predictions/ARC-1_Unet/attempt_3
 - Human：以参与者中答对比例 > 50% 为该任务"人类可解"
 
 ## 代码结构
@@ -72,6 +87,9 @@ arc-error-patterns/
 analysis/load_data.py — 三个数据集的加载函数
 - `load_arc_ground_truth()` → 400个任务的标准答案
 - `load_varc_predictions()` → 跨4次attempt合并，majority vote
+❓如果是vit架构，只使用attempt0；如果是ensemble架构，需要用vit+Unet的attempt0-3（共8个文件夹）
+    详见论文官方repo https://github.com/lillian039/VARC/blob/main/script/analysis/arc_1_vit.sh 
+                   https://github.com/lillian039/VARC/blob/main/script/analysis/arc_1_ensemble.sh
 - `load_harc_summary()` → 加载 summary_data.csv，过滤 evaluation 任务
 - `load_harc_incorrect_submissions()` → 加载聚合错误数据
 
