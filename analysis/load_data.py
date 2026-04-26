@@ -24,53 +24,68 @@ def load_arc_ground_truth():
 
 # ── VARC predictions ──────────────────────────────────────────────────────────
 
-def _majority_vote(grids):
+def _vote_entries(grids):
     counts = {}
-    for g in grids:
-        key = tuple(tuple(row) for row in g)
+    grid_map = {}
+    for grid in grids:
+        key = json.dumps(grid)
+        grid_map[key] = grid
         counts[key] = counts.get(key, 0) + 1
-    return [list(row) for row in max(counts, key=counts.get)]
+    sorted_votes = sorted(counts.items(), key=lambda item: item[1], reverse=True)
+    return [{"prediction": grid_map[key], "votes": votes} for key, votes in sorted_votes]
 
 
-def load_varc_predictions(model="ARC-1_ViT"):
-    """
-    dict[task_id -> list[grid]]  majority-voted across all attempts.
-
-    Actual layout after extracting VARC_predictions.zip:
-      VARC_predictions/VARC_predictions/{model}/attempt_0/{task_id}_predictions.json
-                                                 attempt_1/
-                                                 attempt_2/
-                                                 attempt_3/
-
-    Each JSON file: {"0": [grid, grid, ...], "1": [...], ...}
-    We pool all grids from all 4 attempts then majority-vote.
-    """
-    model_dir = VARC_DIR / "VARC_predictions" / model
-    if not model_dir.exists():
+def _get_varc_attempt_dir(model, attempt):
+    attempt_dir = VARC_DIR / "VARC_predictions" / model / f"attempt_{attempt}"
+    if not attempt_dir.exists():
         raise FileNotFoundError(
-            f"Model directory not found: {model_dir}\n"
-            f"Available: {[p.name for p in (VARC_DIR / 'VARC_predictions').iterdir()]}"
+            f"Attempt directory not found: {attempt_dir}\n"
+            f"Available: {[p.name for p in (VARC_DIR / 'VARC_predictions' / model).iterdir()]}"
         )
+    return attempt_dir
 
-    # Collect all grids per (task_id, test_idx) across every attempt folder
-    all_grids: dict[str, dict[int, list]] = {}
-    for attempt_dir in sorted(model_dir.iterdir()):
-        if not attempt_dir.is_dir():
-            continue
-        for path in attempt_dir.glob("*_predictions.json"):
-            task_id = path.stem.replace("_predictions", "")
-            with open(path) as f:
-                raw = json.load(f)      # {"0": [grid, ...], ...}
-            if task_id not in all_grids:
-                all_grids[task_id] = {}
-            for k, grids in raw.items():
-                idx = int(k)
-                all_grids[task_id].setdefault(idx, []).extend(grids)
 
+def load_varc_vote_entries(model="ARC-1_ViT", attempt=0, top_k=None):
+    """
+    Official plain VARC loading: use a single attempt directory and majority-vote
+    within that run's 510 multi-view predictions for each test example.
+
+    Returns:
+      dict[task_id -> dict[test_idx -> list[{prediction, votes}]]]
+    """
+    attempt_dir = _get_varc_attempt_dir(model, attempt)
     result = {}
-    for task_id, by_idx in all_grids.items():
-        result[task_id] = [_majority_vote(by_idx[i]) for i in range(len(by_idx))]
-    print(f"VARC predictions loaded: {len(result)} tasks (model={model})")
+    for path in sorted(attempt_dir.glob("*_predictions.json")):
+        task_id = path.stem.replace("_predictions", "")
+        with open(path) as f:
+            raw = json.load(f)      # {"0": [grid, ...], "1": [...], ...}
+        result[task_id] = {}
+        for k, grids in raw.items():
+            entries = _vote_entries(grids)
+            if top_k is not None:
+                entries = entries[:top_k]
+            result[task_id][int(k)] = entries
+    print(
+        f"VARC vote entries loaded: {len(result)} tasks "
+        f"(model={model}, attempt={attempt}, top_k={top_k})"
+    )
+    return result
+
+
+def load_varc_predictions(model="ARC-1_ViT", attempt=0):
+    """
+    dict[task_id -> list[grid]]
+
+    Aligns with official plain VARC analysis:
+      - use a single attempt directory (official repo uses attempt_0 for ViT)
+      - for each test example, majority-vote within that attempt's 510 views
+      - return the top-1 prediction grid for downstream visualization/error typing
+    """
+    vote_entries = load_varc_vote_entries(model=model, attempt=attempt, top_k=1)
+    result = {}
+    for task_id, by_idx in vote_entries.items():
+        result[task_id] = [by_idx[i][0]["prediction"] for i in range(len(by_idx))]
+    print(f"VARC predictions loaded: {len(result)} tasks (model={model}, attempt={attempt})")
     return result
 
 

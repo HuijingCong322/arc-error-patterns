@@ -4,9 +4,9 @@ Build data/aligned_dataset.csv — one row per task (400 rows).
 Columns
 -------
 task_id
-varc_correct          bool   - majority-voted ViT prediction matches ground truth
-varc_error_type       str    - correct / wrong_size / close_miss / wrong_content
-varc_cell_accuracy    float  - cell-level accuracy (NaN if wrong_size)
+varc_correct          bool   - official plain VARC pass@2 correctness on attempt_0
+varc_error_type       str    - top-1 prediction error type (correct / wrong_size / ...)
+varc_cell_accuracy    float  - top-1 prediction cell-level accuracy (NaN if wrong_size)
 human_n               int    - number of participants who attempted this task
 human_accuracy        float  - fraction who got it correct (last attempt)
 human_error_mode      str    - most common error type among human attempts
@@ -27,11 +27,11 @@ sys.path.insert(0, str(ROOT))
 from analysis.load_data import (
     load_arc_ground_truth,
     load_varc_predictions,
+    load_varc_vote_entries,
     load_harc_summary,
 )
 from analysis.error_analysis import (
     classify_error,
-    cell_accuracy,
     compute_varc_errors,
     compute_human_errors,
 )
@@ -41,16 +41,16 @@ def build():
     print("Loading data...")
     ground_truth     = load_arc_ground_truth()
     varc_predictions = load_varc_predictions()
+    varc_votes       = load_varc_vote_entries(top_k=2)
     harc_df          = load_harc_summary()
 
     varc_errors  = compute_varc_errors(ground_truth, varc_predictions)
     human_errors = compute_human_errors(harc_df, ground_truth)
 
-    # ── VARC: aggregate to task level (all test examples must be correct) ──
-    varc_task = (
+    # ── VARC: top-1 error profile for visualization / error typing ─────────
+    varc_top1_task = (
         varc_errors.groupby("task_id")
         .agg(
-            varc_correct=("error_type", lambda x: (x == "correct").all()),
             varc_error_type=("error_type", lambda x: (
                 "correct" if (x == "correct").all()
                 else x[x != "correct"].mode().iloc[0] if len(x[x != "correct"]) > 0
@@ -60,6 +60,27 @@ def build():
         )
         .reset_index()
     )
+
+    # ── VARC: official plain VARC correctness (attempt_0, top-2 / pass@2) ──
+    varc_pass2_rows = []
+    for task_id, truths in ground_truth.items():
+        votes_by_idx = varc_votes.get(task_id)
+        if votes_by_idx is None:
+            continue
+        per_test_correct = []
+        for test_idx, truth in enumerate(truths):
+            candidates = votes_by_idx.get(test_idx, [])
+            top2_correct = any(
+                classify_error(entry["prediction"], truth) == "correct"
+                for entry in candidates[:2]
+            )
+            per_test_correct.append(top2_correct)
+        varc_pass2_rows.append({
+            "task_id": task_id,
+            "varc_correct": all(per_test_correct),
+        })
+    varc_pass2_task = pd.DataFrame(varc_pass2_rows)
+    varc_task = pd.merge(varc_top1_task, varc_pass2_task, on="task_id", how="inner")
 
     # ── Human: aggregate to task level ────────────────────────────────────
     def human_error_mode(x):
