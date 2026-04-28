@@ -15,6 +15,13 @@ both_correct          bool
 human_only            bool   - human majority correct, VARC wrong
 varc_only             bool   - VARC correct, human majority wrong
 both_wrong            bool
+n_views               float  - mean view count across test examples (≈510)
+n_unique_grids        float  - mean number of distinct prediction grids across views
+view_level_accuracy   float  - mean fraction of views matching ground truth
+top1_share            float  - mean top-1 vote share (top-1 count / n_views)
+top2_share            float  - mean top-2 vote share
+top1_top2_gap         float  - mean (top1 - top2) / n_views — model's top-1 confidence margin
+vote_entropy          float  - mean Shannon entropy (nats) over view votes
 """
 
 import sys
@@ -34,6 +41,10 @@ from analysis.error_analysis import (
     classify_error,
     compute_varc_errors,
     compute_human_errors,
+)
+from analysis.view_consistency import (
+    compute_view_consistency,
+    aggregate_to_task as aggregate_view_to_task,
 )
 
 
@@ -81,6 +92,13 @@ def build():
         })
     varc_pass2_task = pd.DataFrame(varc_pass2_rows)
     varc_task = pd.merge(varc_top1_task, varc_pass2_task, on="task_id", how="inner")
+
+    # ── VARC: view-consistency metrics over the 510 random views ───────────
+    view_df = compute_view_consistency(ground_truth=ground_truth)
+    view_task = aggregate_view_to_task(view_df).drop(
+        columns=["top1_correct_all"]
+    )
+    varc_task = pd.merge(varc_task, view_task, on="task_id", how="left")
 
     # ── Human: aggregate to task level ────────────────────────────────────
     def human_error_mode(x):
