@@ -22,6 +22,12 @@ top1_share            float  - mean top-1 vote share (top-1 count / n_views)
 top2_share            float  - mean top-2 vote share
 top1_top2_gap         float  - mean (top1 - top2) / n_views — model's top-1 confidence margin
 vote_entropy          float  - mean Shannon entropy (nats) over view votes
+human_n_responses     int    - participant count contributing answers
+human_n_unique_grids  int    - number of distinct human final-answer grids
+human_top1_share      float  - most-common human answer's share of responses
+human_top1_correct    bool   - whether the human top-1 answer is the correct one
+human_top1_top2_gap   float  - gap between top-1 and top-2 human answer counts
+human_vote_entropy    float  - Shannon entropy (nats) over human answer distribution
 """
 
 import sys
@@ -46,6 +52,7 @@ from analysis.view_consistency import (
     compute_view_consistency,
     aggregate_to_task as aggregate_view_to_task,
 )
+from analysis.human_consistency import compute_human_consistency
 
 
 def build():
@@ -119,6 +126,10 @@ def build():
         }))
         .reset_index()
     )
+
+    # ── Human: answer-distribution metrics (mirrors VARC view-consistency) ─
+    human_consistency = compute_human_consistency(harc_df=harc_df, ground_truth=ground_truth)
+    human_task = pd.merge(human_task, human_consistency, on="task_id", how="left")
 
     # ── Merge ──────────────────────────────────────────────────────────────
     df = pd.merge(varc_task, human_task, on="task_id", how="inner")
