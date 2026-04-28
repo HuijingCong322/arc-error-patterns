@@ -1,0 +1,463 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\graphicspath{{results/}}
+
+\title{Where the Model Wanders and the Mind Converges:\\
+A Distributional Comparison of Human and VARC Failures on ARC}
+\author{Jing Yu \and Huijing Cong \and Wanyi Zhou}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The Abstraction and Reasoning Corpus (ARC) remains one of the few benchmarks
+on which strong neural systems still trail human performance. Most prior
+analyses report task-level accuracy, treating each task as a binary
+pass/fail event. We argue that this hides a more fundamental difference in
+\emph{how} the two agents fail. Using the official VARC ViT model's 510
+multi-view predictions per task and 946 participants from H-ARC, we treat
+each side's predictions as a sample from an answer distribution and compare
+their entropy, top-1 vote share, and the number of distinct candidate
+grids. On the 111 tasks where humans succeed but VARC fails, humans
+converge on $\approx 3.6$ distinct answers (top-1 share 74\%, entropy
+$0.80$); on the same tasks VARC scatters across $\approx 264$ distinct
+grids (top-1 share 13\%, entropy $4.72$). The correlation between human
+and VARC entropy is only $0.21$. We argue this signature reflects a
+\emph{failure-to-induce}: rather than picking among a small hypothesis
+set as humans do, the model produces hundreds of pixel-space candidates,
+suggesting it never localizes a rule.
+\end{abstract}
+
+\section{Introduction}
+
+The Abstraction and Reasoning Corpus~\cite{chollet2019measure} was
+designed as a deliberate counterpoint to large-scale supervised
+benchmarks: each task supplies only a handful of input--output examples
+and asks the solver to induce a transformation rule that generalizes to
+held-out inputs. Modern systems, including the VARC family of vision
+transformers~\cite{varc}, have closed much of the gap to human
+performance, but a substantial residual remains. The natural next
+question is not how much remains, but \emph{what kind of failure
+accounts for it}.
+
+Prior work largely reports per-task accuracy or pass@$k$ scoring on
+ARC, which collapses each task to a single bit and obscures the
+underlying behavior. The H-ARC dataset~\cite{harc} provides the
+complementary human-side signal: multiple participants attempting each
+task, with intermediate and final grids logged. Concurrently, VARC's
+inference procedure already provides an analogous signal on the model
+side: each test input is rendered through 510 augmented \emph{views},
+and the final prediction is a majority vote over the 510 view-level
+outputs. The 510-vote distribution is not normally examined directly, but
+it is exactly the distribution we would want if we were asking what
+hypothesis the model entertains.
+
+We exploit this symmetry: $\sim 10$ human responses per task and $510$
+view predictions per task can both be summarized as a distribution over
+answer grids. We ask whether the \emph{shape} of that distribution
+distinguishes the two agents on the tasks that matter most --- those
+where humans succeed and the model fails.
+
+\paragraph{Contributions.}
+\begin{itemize}
+  \item We introduce a passive input-intervention analysis that reuses
+        VARC's existing 510-view predictions to characterize model
+        confidence at task level, with no additional inference.
+  \item We define matched answer-distribution metrics for human and
+        model and compare them on H-ARC's 400 evaluation tasks.
+  \item We identify a qualitative asymmetry: on tasks humans solve
+        and VARC misses, humans concentrate on a handful of candidate
+        grids while the model scatters across hundreds. We argue this is
+        a \emph{failure-to-induce} signature, not a fine-grained error.
+\end{itemize}
+
+\section{Methods}
+
+\subsection{Data}
+
+We use the 400-task ARC-AGI evaluation set as the shared benchmark. For
+the model side we use VARC's official ARC-1\_ViT predictions, specifically
+the \texttt{attempt\_0} folder, which contains 510 view-level predicted
+grids per test input. For the human side we use H-ARC's
+\texttt{summary\_data.csv}, which contains 7820 attempt-level submissions
+from 946 participants. We restrict to \texttt{task\_type == evaluation}
+throughout and take each participant's \emph{last} attempt as their
+final answer for that task. Table~\ref{tab:data} summarizes the data.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lr}
+\toprule
+\textbf{Source} & \textbf{Count} \\
+\midrule
+ARC evaluation tasks & 400 \\
+VARC views per task (\texttt{attempt\_0}) & 510 \\
+H-ARC participants & 946 \\
+H-ARC final answers (last attempt $\times$ task) & $\approx 10$ per task \\
+\bottomrule
+\end{tabular}
+\caption{Data sources used in this study.}
+\label{tab:data}
+\end{table}
+
+\subsection{Correctness scoring}
+
+For VARC we follow the official plain-ViT scoring: within
+\texttt{attempt\_0}'s 510 views per test input, count grid-level votes
+and retain the top-2 most-frequent grids; the task is correct if either
+of those two matches the ground truth (pass@2). For human correctness
+on a task we report \texttt{human\_accuracy}, the fraction of
+participants whose final answer matches ground truth. To form the four
+quadrants in Section~\ref{sec:results}, we declare the human side
+``correct'' on a task when \texttt{human\_accuracy} $> 0.5$.
+
+\subsection{Error typing}
+
+For diagnostic purposes (independent of the pass@2 correctness
+calculation) we classify each predicted grid against ground truth into
+one of four categories:
+\begin{itemize}
+  \item \texttt{correct}: exact match.
+  \item \texttt{wrong\_size}: row or column count differs from ground
+        truth.
+  \item \texttt{close\_miss}: shape matches and cell-level accuracy
+        $\geq 0.8$.
+  \item \texttt{wrong\_content}: shape matches but cell-level accuracy
+        $< 0.8$.
+\end{itemize}
+For VARC we use the top-1 voted grid for error typing, mirroring how the
+single most-likely model output would be inspected.
+
+\subsection{Answer-distribution metrics}
+
+The core methodological move is to treat the 510 view-level VARC
+predictions and the $\sim 10$ human final answers as samples from
+parallel \emph{answer distributions} on each task. For each task and
+each agent we compute, over the empirical distribution of distinct grids
+$\{g_i\}$ with vote counts $n_i$ (total $N$):
+\begin{align*}
+\text{top-1 share} &= \frac{\max_i n_i}{N},\\
+\text{top-1/top-2 gap} &= \frac{n_{(1)} - n_{(2)}}{N},\\
+H &= -\sum_i \frac{n_i}{N} \log \frac{n_i}{N}\quad\text{(Shannon entropy, nats)},\\
+n_{\mathrm{unique}} &= |\{g_i\}|.
+\end{align*}
+For the model these summarize the 510-view output distribution; for
+humans they summarize the per-task distribution of last-attempt grids.
+Because both sides are scored on the same units (distinct grids,
+proportions of agents), the metrics are directly comparable.
+
+\subsection{Quadrant taxonomy}
+\label{sec:quadrants}
+
+We partition the 400 tasks by joint correctness:
+\begin{itemize}
+  \item \texttt{both\_correct} ($n=173$),
+  \item \texttt{human\_only} ($n=111$): human majority correct, VARC
+        pass@2 wrong,
+  \item \texttt{varc\_only} ($n=48$): VARC correct, human majority
+        wrong,
+  \item \texttt{both\_wrong} ($n=68$).
+\end{itemize}
+The \texttt{human\_only} group is the focus of our analysis: these are
+the tasks on which the model's failure is least excusable, since the
+problem demonstrably admits a solution that ordinary participants find.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Aggregate accuracy and error type}
+
+Across the 400 evaluation tasks, mean human last-attempt accuracy is
+$64.1\%$ and VARC pass@2 accuracy is $55.3\%$, matching the $55.63\%$
+plain-ViT pass@2 score reported by Hu et al.~\cite{varc} on the ARC-1
+evaluation set. The four quadrants from
+Section~\ref{sec:quadrants} (Table~\ref{tab:quadrants}) confirm that
+\texttt{human\_only} is the dominant disagreement region: the model
+misses 111 tasks the human cohort solves, more than twice the size of
+the reverse case. Figure~\ref{fig:task_scatter} visualizes the
+per-task split between the two agents.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+ & both\_correct & human\_only & varc\_only & both\_wrong \\
+\midrule
+\# tasks & 173 & 111 & 48 & 68 \\
+\bottomrule
+\end{tabular}
+\caption{Quadrant counts. \texttt{human\_only} is the largest
+disagreement region.}
+\label{tab:quadrants}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{task_accuracy_scatter.png}
+\caption{Per-task accuracy. Each point is one of the 400 evaluation
+tasks; the $y$-axis is binary VARC correctness with vertical jitter,
+the $x$-axis is human accuracy. Points cluster on the four corners
+defined by the quadrants of Section~\ref{sec:quadrants}.}
+\label{fig:task_scatter}
+\end{figure}
+
+When the two agents err, they err with different shapes.
+Table~\ref{tab:varc_error_types} breaks down VARC's failure modes:
+two thirds of VARC's wrong answers are \texttt{close\_miss} ---
+shape-correct grids that miss only a fraction of cells --- with the
+remaining third split between \texttt{wrong\_size} and
+\texttt{wrong\_content}. Figure~\ref{fig:error_distribution} shows the
+joint distribution alongside the human side. Conditional on being
+wrong, mean cell-level accuracy is $0.876$ for VARC and $0.739$ for
+humans (Figure~\ref{fig:cell_acc_dist}). The model thus tends to land
+near the right structure with mismatched cells, while human errors more
+often replace content wholesale.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lr}
+\toprule
+\textbf{VARC error type} (when wrong) & \textbf{Share} \\
+\midrule
+close\_miss     & $0.670$ \\
+wrong\_size     & $0.179$ \\
+wrong\_content  & $0.151$ \\
+\bottomrule
+\end{tabular}
+\caption{VARC top-1 error type distribution conditional on the task
+being wrong. Most failures preserve grid shape and replace only a
+minority of cells.}
+\label{tab:varc_error_types}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{error_distribution.png}
+\caption{Error type distribution for VARC and humans across all
+attempts. The shapes of the two distributions differ: VARC clusters in
+\texttt{close\_miss}, humans spread more evenly across error
+categories.}
+\label{fig:error_distribution}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\textwidth]{cell_accuracy_dist.png}
+\caption{Cell-level accuracy distribution conditional on the task
+being wrong. VARC's mass concentrates near $1.0$: most wrong
+predictions miss only a few cells. Human wrong attempts spread across
+the range, with many low-accuracy submissions reflecting wholesale
+content replacement.}
+\label{fig:cell_acc_dist}
+\end{figure}
+
+\subsection{VARC's view distribution tracks model confidence, not task
+difficulty}
+
+We first examine the VARC side alone. Conditioning on the four
+quadrants (Table~\ref{tab:varc_view}), we find a sharp split: when VARC
+gets the task right (whether or not humans do), its 510 views agree on
+a small handful of grids; when VARC gets the task wrong, the 510 views
+scatter across hundreds of distinct outputs.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+ & top-1 share & top-1/top-2 gap & vote entropy & \# unique grids \\
+\midrule
+both\_correct & 0.644 & 0.581 & 1.818 & 81.4 \\
+varc\_only    & 0.618 & 0.557 & 1.997 & 91.6 \\
+human\_only   & 0.125 & 0.071 & 4.724 & 263.7 \\
+both\_wrong   & 0.110 & 0.065 & 4.914 & 280.9 \\
+\bottomrule
+\end{tabular}
+\caption{VARC 510-view distribution metrics by quadrant. The top-1
+share collapses by an order of magnitude on the two model-wrong rows,
+but the two model-wrong rows are nearly indistinguishable from each
+other.}
+\label{tab:varc_view}
+\end{table}
+
+Crucially, the VARC view distribution does \emph{not} separate
+\texttt{human\_only} from \texttt{both\_wrong}: the entropy values
+($4.72$ vs $4.91$) and unique-grid counts ($264$ vs $281$) are within
+sampling noise. Whatever signal the 510-view spread carries, it
+reflects whether the model itself has localized an answer, not whether
+the task is in principle solvable.
+Figure~\ref{fig:view_consistency} visualizes this:
+human accuracy varies widely within the high-entropy regime, with
+\texttt{human\_only} (red) and \texttt{both\_wrong} (gray) overlapping
+heavily.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{view_consistency_vs_human.png}
+\caption{Human accuracy versus VARC view-distribution chaos. VARC's
+own confidence (entropy on the left, top-1/top-2 margin on the right)
+cleanly separates VARC-correct (green/blue) from VARC-wrong (red/gray),
+but does not separate \texttt{human\_only} (red) from
+\texttt{both\_wrong} (gray) within the model-wrong band.}
+\label{fig:view_consistency}
+\end{figure}
+
+\subsection{Human and model converge in different ways}
+
+We now bring in the human-side answer distribution. For each task we
+compute the same metrics over participants' final answer grids. The
+results, summarized in Table~\ref{tab:human_vs_varc} and
+Figure~\ref{fig:human_vs_varc}, are striking.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+ & VARC top-1 & VARC entropy & Human top-1 & Human entropy \\
+\midrule
+both\_correct & 0.644 & 1.818 & 0.774 & 0.716 \\
+human\_only   & 0.125 & 4.724 & 0.741 & 0.800 \\
+varc\_only    & 0.618 & 1.997 & 0.357 & 1.752 \\
+both\_wrong   & 0.110 & 4.914 & 0.355 & 1.767 \\
+\bottomrule
+\end{tabular}
+\caption{Top-1 share and Shannon entropy of VARC and human answer
+distributions, per quadrant. The \texttt{human\_only} row is the
+defining contrast: humans concentrate (top-1 share 0.74, entropy 0.80)
+while VARC scatters (top-1 share 0.13, entropy 4.72).}
+\label{tab:human_vs_varc}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{human_vs_varc_distribution.png}
+\caption{Direct comparison of VARC and human answer distributions per
+task. \emph{Left:} entropy of VARC's 510-view distribution against
+entropy of the human last-attempt distribution. The dashed line is
+$y = x$. Red points (\texttt{human\_only}) cluster far below the
+diagonal: humans converge while the model scatters. \emph{Right:}
+number of distinct grids on each side; note the log scale on the VARC
+axis. \texttt{human\_only} tasks place humans in the 2--5 grid regime
+and VARC in the 100--500 grid regime.}
+\label{fig:human_vs_varc}
+\end{figure}
+
+Two patterns are worth highlighting. First, on \texttt{human\_only}
+tasks, the unique-grid count differs by nearly two orders of magnitude
+($\approx 3.6$ vs $\approx 264$). Humans don't merely outperform; they
+do so by entertaining a different size of hypothesis set. Second,
+\texttt{both\_wrong} tasks show humans \emph{also} disperse (entropy
+$1.77$, $\approx 7$ distinct grids) --- but still an order of magnitude
+less than VARC's $\approx 281$ grids. Even on tasks no one can solve,
+the human candidate set is bounded; the model's is not.
+
+The Pearson correlation between per-task VARC entropy and human entropy
+is $0.21$. This is non-trivial but small: tasks that confuse humans and
+tasks that confuse the model are largely different tasks. The two
+agents have different difficulty profiles, not a shared one with one
+agent uniformly weaker.
+
+\section{Discussion and Conclusion}
+
+\subsection{Failure-to-induce}
+
+The strongest reading of our results is that the two agents are not
+failing at the same operation. Human errors --- both on
+\texttt{human\_only} (when participants disagree on a partially correct
+answer) and on \texttt{both\_wrong} (when no participant succeeds) ---
+sit in a small hypothesis space: at most a handful of distinct grids,
+typically reflecting plausible but conflicting transformation rules.
+VARC's failures, by contrast, are nearly uniform over hundreds of
+candidate grids per task. The model is not picking the wrong rule from
+a shortlist; there is no shortlist.
+
+We label this signature \emph{failure-to-induce}. The model's
+multi-view procedure samples augmented presentations of the same input,
+and a system that had localized a transformation rule should be roughly
+view-invariant on it; the rule should produce a stable answer regardless
+of the augmentation. The fact that the 510 views disagree across
+hundreds of distinct outputs on the model's failure tasks suggests no
+such rule has been localized.
+
+\subsection{Why VARC's own confidence isn't enough}
+
+A natural alternative diagnostic would be to use the model's own
+view-level disagreement as a confidence signal --- low entropy meaning
+``model knows,'' high entropy meaning ``model doesn't know.''
+Section~3.2 shows this signal is real but limited: it cleanly
+separates VARC-correct from VARC-wrong, but it cannot separate
+\texttt{human\_only} from \texttt{both\_wrong}. The model is equally
+confused on tasks that have a human-accessible solution and on tasks
+that don't. Self-reported confidence does not, on its own, identify the
+diagnostically interesting failures; it requires the human-side
+distribution as a baseline.
+
+\subsection{Limitations}
+
+Our intervention is passive: we exploit VARC's existing 510-view
+sampling rather than designing controlled input edits (color
+permutation, rotation, etc.). This means we can characterize the
+\emph{shape} of model failure but cannot causally identify the missing
+invariance. Second, we use only the plain ViT \texttt{attempt\_0}
+configuration, not the ensemble setup described in the original VARC
+paper; the ensemble may be sharper. Third, the human distribution per
+task is built from $\approx 10$ participants, which limits the
+resolution of the human entropy estimate.
+
+\subsection{Future work}
+
+A controlled active-intervention follow-up is the natural sequel:
+applying targeted augmentations (color permutation, rotation, mirror,
+scale) on the \texttt{human\_only} subset and measuring how the
+view-level prediction set responds. Given that
+Section~3.2 shows VARC is already maximally diffuse on these tasks, the
+question is whether \emph{any} structured intervention sharpens the
+distribution; if not, that itself is evidence that the model's failure
+is upstream of any specific invariance. A second direction is to use
+the entropy gap between humans and the model as a difficulty signal
+for constructing harder ARC evaluation sets.
+
+\subsection{Conclusion}
+
+On the ARC tasks that ordinary humans solve and the VARC ViT model
+fails, the two agents are not failing in the same way. Humans
+converge: their final answers cluster on a handful of grids, with one
+clearly modal. The model wanders: its 510 view-level predictions
+spread across hundreds of distinct grids, with no candidate exceeding
+$13\%$ of the vote. The cognitive difference is not a matter of
+sharper precision; it is a matter of \emph{whether a hypothesis set has
+been formed at all}.
+
+\begin{thebibliography}{9}
+
+\bibitem{chollet2019measure}
+F.~Chollet,
+\newblock On the Measure of Intelligence,
+\newblock arXiv:1911.01547, 2019.
+\newblock \url{https://arxiv.org/abs/1911.01547}.
+
+\bibitem{varc}
+K.~Hu, A.~Cy, L.~Qiu, X.~D.~Ding, R.~Wang, Y.~E.~Zhu, J.~Andreas, and K.~He,
+\newblock {ARC} Is a Vision Problem!,
+\newblock arXiv:2511.14761, 2025.
+\newblock \url{https://arxiv.org/abs/2511.14761}.
+
+\bibitem{harc}
+S.~LeGris, W.~Vong, B.~M.~Lake, and T.~M.~Gureckis,
+\newblock H-ARC,
+\newblock OSF, 2025.
+\newblock \url{https://doi.org/10.17605/OSF.IO/BH8YQ}.
+
+\end{thebibliography}
+
+\end{document}
