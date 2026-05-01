@@ -1,0 +1,21 @@
+task_id,human_accuracy,varc_error_label,human_error_label,notes
+08573cc6,0.286,wrong_structure,partial_rule,VARC got colors right but wrong spiral dimensions; humans understood spiral concept but missed exact cell positions
+0934a4d8,0.111,wrong_rule,wrong_rule,Very hard compression task; both sides completely failed to understand the rule
+103eff5b,0.500,wrong_position,partial_rule,VARC had correct elements but placed them at wrong positions; humans got the shape but missed the gravity/drop rule
+12eac192,0.375,wrong_rule,partial_rule,VARC used wrong color mapping; humans got the mosaic structure right but wrong color assignments
+136b0064,0.250,wrong_position,partial_rule,VARC extracted right elements but placed them at wrong positions; humans understood column structure but wrong positions
+79fb03f4,0.000,near_miss,partial_rule,VARC output very close to ground truth; humans attempted horizontal fill but wrong spacing
+e6de6e8f,0.100,near_miss,near_miss,Both VARC and most humans drew very similar red shapes; off by only 1-2 cells
+5b692c0f,0.143,wrong_position,partial_rule,VARC placed creatures at wrong positions/sizes; humans identified two creatures but missed details
+891232d6,0.167,wrong_rule,partial_rule,VARC drew paths in completely wrong pattern; humans knew paths were needed but connected wrong dots
+ad7e01d0,0.222,wrong_position,partial_rule,VARC scattered correct colored dots but at wrong positions; humans got color distribution right but wrong coordinates
+94133066,0.250,wrong_position,partial_rule,VARC drew shape on blue background but wrong position; humans understood blue background but wrong shape
+37d3e8b2,0.286,partial_rule,partial_rule,Both sides partially understood the dot-count to color mapping but got the correspondence wrong
+dc2aa30b,0.300,near_miss,near_miss,Both VARC and humans very close to ground truth; only a few blue/red cells off
+c92b942c,0.333,wrong_rule,wrong_rule,Complex expansion task; both sides applied completely wrong expansion rules
+73c3b0d8,0.375,wrong_position,wrong_position,Both understood red stripe + yellow elements structure but mapped yellow squares to wrong positions
+2a5f8217,0.400,wrong_position,wrong_position,Both identified correct shapes and colors but placed them at wrong positions
+85fa5666,0.444,wrong_position,partial_rule,VARC expanded dots but at wrong positions; humans understood expansion concept but missed color/position details
+e5c44e8f,0.462,wrong_structure,near_miss,VARC drew a spiral but with wrong structure (became G-shape); most humans were very close
+17cae0c1,0.500,wrong_rule,partial_rule,VARC filled strips with wrong color mapping; humans understood strip structure but got color assignments wrong
+dd2401ed,0.500,partial_rule,partial_rule,Both understood gray stripe + color structure but got colored cell positions wrong
