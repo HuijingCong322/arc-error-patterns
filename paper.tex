@@ -219,7 +219,7 @@ shape-correct grids that miss only a fraction of cells --- with the
 remaining third split between \texttt{wrong\_size} and
 \texttt{wrong\_content}. Figure~\ref{fig:error_distribution} shows the
 joint distribution alongside the human side. Conditional on being
-wrong, mean cell-level accuracy is $0.876$ for VARC and $0.739$ for
+wrong, mean cell-level accuracy is $0.882$ for VARC and $0.739$ for
 humans (Figure~\ref{fig:cell_acc_dist}). The model thus tends to land
 near the right structure with mismatched cells, while human errors more
 often replace content wholesale.
@@ -243,11 +243,12 @@ minority of cells.}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.7\textwidth]{error_distribution.png}
-\caption{Error type distribution for VARC and humans across all
-attempts. The shapes of the two distributions differ: VARC clusters in
-\texttt{close\_miss}, humans spread more evenly across error
-categories.}
+\includegraphics[width=0.7\textwidth]{error_distribution_pass2.png}
+\caption{Error type distribution for VARC (pass@2 correctness) and humans (per
+attempt) across all 400 tasks. VARC's ``correct'' bar uses task-level pass@2
+scoring (55.3\%); human's bar uses mean per-attempt accuracy (64.9\%). The
+shapes of the wrong-answer distributions differ markedly: VARC clusters in
+\texttt{close\_miss}, while humans spread more evenly across error categories.}
 \label{fig:error_distribution}
 \end{figure}
 
@@ -362,10 +363,64 @@ less than VARC's $\approx 281$ grids. Even on tasks no one can solve,
 the human candidate set is bounded; the model's is not.
 
 The Pearson correlation between per-task VARC entropy and human entropy
-is $0.21$. This is non-trivial but small: tasks that confuse humans and
-tasks that confuse the model are largely different tasks. The two
-agents have different difficulty profiles, not a shared one with one
-agent uniformly weaker.
+is $r = 0.21$ ($p = 3.1 \times 10^{-5}$, $n = 400$). This is non-trivial
+but small: tasks that confuse humans and tasks that confuse the model are
+largely different tasks. The two agents have different difficulty profiles,
+not a shared one with one agent uniformly weaker.
+
+The entropy gap on \texttt{human\_only} tasks is statistically robust.
+A Mann-Whitney $U$ test comparing VARC vote entropy on \texttt{human\_only}
+tasks against human answer entropy on the same tasks yields
+$U = 12291$, $p < 10^{-30}$ (one-sided), with a large effect size
+(Cohen's $d = 1.92$ relative to \texttt{both\_correct} tasks).
+Critically, VARC entropy does \emph{not} differ significantly between
+\texttt{human\_only} and \texttt{both\_wrong} tasks ($U = 3577$, $p = 0.56$),
+confirming that the model's confusion does not track whether the task is
+in principle solvable. Figure~\ref{fig:entropy_boxplot} summarises the
+full per-quadrant distributions.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{entropy_boxplot.png}
+\caption{Per-quadrant entropy distributions. \emph{Left:} VARC 510-view vote
+entropy. \emph{Right:} Human answer entropy. VARC cleanly separates
+model-correct (low entropy) from model-wrong (high entropy) quadrants, while
+human entropy is low on both \texttt{both\_correct} and \texttt{human\_only}
+and elevated on \texttt{varc\_only} and \texttt{both\_wrong}. The overlap
+between \texttt{human\_only} (red) and \texttt{both\_wrong} (gray) on the
+left panel is confirmed to be non-significant ($p = 0.56$).}
+\label{fig:entropy_boxplot}
+\end{figure}
+
+\subsection{Qualitative illustration}
+
+Figure~\ref{fig:qualitative} shows a concrete \texttt{human\_only} task
+(id: \texttt{b457fec5}) that exemplifies the failure-to-induce signature.
+The training examples reveal a clear rule: a grey diagonal stripe is
+recoloured with the colours of small marker squares placed along it.
+Among the 12 participants who attempted the task, all who submitted a final
+answer converged on at most 3 distinct grids (entropy $0.87$), with the
+majority answer exactly matching ground truth.
+VARC's 510 views, by contrast, scatter across \textbf{504 distinct prediction
+grids} (entropy $6.22$) --- effectively a near-uniform distribution over the
+output space. The model's top-1 prediction has the right rough structure
+but applies colours inconsistently, and no single prediction captures more
+than a fraction of the vote. This is qualitatively different from
+a model that ``almost gets it'': it is a model that has not formed any
+stable hypothesis about what the rule is.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{qualitative_example.png}
+\caption{A \texttt{human\_only} task (b457fec5).
+\emph{Row 1:} Training inputs.
+\emph{Row 2:} Training outputs, test input, ground truth, and VARC's top-1
+prediction (red label).
+\emph{Row 3:} Representative wrong human answers.
+Humans produce only 3 distinct final answers (entropy $0.87$); VARC
+scatters across 504 distinct grids (entropy $6.22$).}
+\label{fig:qualitative}
+\end{figure}
 
 \section{Discussion and Conclusion}
 

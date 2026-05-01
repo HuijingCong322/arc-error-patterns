@@ -1,0 +1,40 @@
+============================================================
+STATISTICAL SIGNIFICANCE REPORT
+============================================================
+
+--- Mann-Whitney U test: VARC entropy vs Human entropy
+    on human_only tasks (n=111)
+    H1: VARC entropy > Human entropy
+    U = 12291.0,  p = 7.04e-38
+
+--- Mann-Whitney U test: VARC entropy
+    human_only (n=111) vs both_correct (n=173)
+    H1: human_only VARC entropy > both_correct VARC entropy
+    U = 17201.0,  p = 1.12e-29
+    Cohen's d = 1.92
+
+--- Mann-Whitney U test: VARC entropy
+    human_only (n=111) vs both_wrong (n=68)  [should be n.s.]
+    H1: two-sided difference
+    U = 3577.0,  p = 0.5592
+
+--- Pearson r: per-task VARC entropy vs Human entropy (n=400)
+    r = 0.207,  p = 3.11e-05
+
+============================================================
+PAPER TEXT SNIPPETS TO INSERT
+============================================================
+
+[Abstract / Results section 3.3]
+The correlation between per-task VARC entropy and human entropy
+is r = 0.21 (p = 3.11e-05, Pearson, n = 400).
+
+[Results section 3.3, after Table 4]
+The entropy gap on human_only tasks (VARC: 4.72,
+human: 0.80) is statistically significant
+(Mann-Whitney U = 12291, p < 10^-30, one-sided).
+VARC entropy on human_only tasks is also significantly higher
+than on both_correct tasks (U = 17201, p < 10^-30,
+Cohen's d = 1.92), but does not differ significantly
+from both_wrong tasks (U = 3577, p = 0.559),
+confirming that model confusion does not track task solvability.
