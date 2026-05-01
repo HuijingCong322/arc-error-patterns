@@ -216,9 +216,9 @@ disagreement region.}
 \label{tab:quadrants}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.7\textwidth]{task_accuracy_scatter.png}
+\includegraphics[width=\columnwidth]{task_accuracy_scatter.png}
 \caption{Per-task accuracy. Each point is one of the 400 evaluation
 tasks; the $y$-axis is binary VARC correctness with vertical jitter,
 the $x$-axis is human accuracy. Points cluster on the four corners
@@ -255,9 +255,9 @@ minority of cells.}
 \label{tab:varc_error_types}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.7\textwidth]{error_distribution_pass2.png}
+\includegraphics[width=\columnwidth]{error_distribution_pass2.png}
 \caption{Error type distribution for VARC (pass@2 correctness) and humans (per
 attempt) across all 400 tasks. VARC's ``correct'' bar uses task-level pass@2
 scoring (55.3\%); human's bar uses mean per-attempt accuracy (64.9\%). The
@@ -266,9 +266,9 @@ shapes of the wrong-answer distributions differ markedly: VARC clusters in
 \label{fig:error_distribution}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.7\textwidth]{cell_accuracy_dist.png}
+\includegraphics[width=\columnwidth]{cell_accuracy_dist.png}
 \caption{Cell-level accuracy distribution conditional on the task
 being wrong. VARC's mass concentrates near $1.0$: most wrong
 predictions miss only a few cells. Human wrong attempts spread across
@@ -316,7 +316,7 @@ human accuracy varies widely within the high-entropy regime, with
 \texttt{human\_only} (red) and \texttt{both\_wrong} (gray) overlapping
 heavily.
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{view_consistency_vs_human.png}
 \caption{Human accuracy versus VARC view-distribution chaos. VARC's
@@ -325,7 +325,7 @@ cleanly separates VARC-correct (green/blue) from VARC-wrong (red/gray),
 but does not separate \texttt{human\_only} (red) from
 \texttt{both\_wrong} (gray) within the model-wrong band.}
 \label{fig:view_consistency}
-\end{figure}
+\end{figure*}
 
 \subsection{Human and model converge in different ways}
 \label{sec:human_model}
@@ -354,7 +354,7 @@ while VARC scatters (top-1 share 0.13, entropy 4.72).}
 \label{tab:human_vs_varc}
 \end{table}
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{human_vs_varc_distribution.png}
 \caption{Direct comparison of VARC and human answer distributions per
@@ -366,7 +366,7 @@ number of distinct grids on each side; note the log scale on the VARC
 axis. \texttt{human\_only} tasks place humans in the 2--5 grid regime
 and VARC in the 100--500 grid regime.}
 \label{fig:human_vs_varc}
-\end{figure}
+\end{figure*}
 
 Two patterns are worth highlighting. First, on \texttt{human\_only}
 tasks, the unique-grid count differs by nearly two orders of magnitude
@@ -394,7 +394,7 @@ confirming that the model's confusion does not track whether the task is
 in principle solvable. Figure~\ref{fig:entropy_boxplot} summarises the
 full per-quadrant distributions.
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{entropy_boxplot.png}
 \caption{Per-quadrant entropy distributions. \emph{Left:} VARC 510-view vote
@@ -405,7 +405,7 @@ and elevated on \texttt{varc\_only} and \texttt{both\_wrong}. The overlap
 between \texttt{human\_only} (red) and \texttt{both\_wrong} (gray) on the
 left panel is confirmed to be non-significant ($p = 0.56$).}
 \label{fig:entropy_boxplot}
-\end{figure}
+\end{figure*}
 
 \subsection{Extreme cases: tasks with maximal entropy gap}
 \label{sec:extreme}
@@ -421,9 +421,9 @@ denser sample from the model's prediction distribution; the human-side
 computation is unchanged. Figure~\ref{fig:entropy_gap_scatter} re-plots
 the human-vs.-VARC entropy plane with the ten largest-gap tasks circled.
 
-\begin{figure}[h]
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.75\textwidth]{entropy_gap_scatter.png}
+\includegraphics[width=\columnwidth]{entropy_gap_scatter.png}
 \caption{Human vs.\ VARC answer entropy for all 400 tasks (bits,
 pooling all four VARC \texttt{attempt} folders for 2\,040 predictions
 per task). Colour encodes quadrant membership. Tasks above the dashed
@@ -472,7 +472,7 @@ distribution over distinct grids and effectively never repeats the same
 answer. Figures~\ref{fig:extreme_ba9d41b8}--\ref{fig:extreme_1e97544e}
 show each task in full.
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{entropy_gap_top3_ba9d41b8.png}
 \caption{Task \texttt{ba9d41b8} ($\Delta H = 10.80$ bits, the largest
@@ -482,24 +482,24 @@ sampled distinct VARC predictions (red --- nearly all unique among
 2\,040 views). \emph{Row 4:} Human final answers, all equal to ground
 truth.}
 \label{fig:extreme_ba9d41b8}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{entropy_gap_top3_d4c90558.png}
 \caption{Task \texttt{d4c90558} ($\Delta H = 10.12$ bits). Same layout
 as Figure~\ref{fig:extreme_ba9d41b8}. Every human submits the correct
 answer; VARC's predictions show no convergence.}
 \label{fig:extreme_d4c90558}
-\end{figure}
+\end{figure*}
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{entropy_gap_top3_1e97544e.png}
 \caption{Task \texttt{1e97544e} ($\Delta H = 10.03$ bits). Same layout
 as Figure~\ref{fig:extreme_ba9d41b8}.}
 \label{fig:extreme_1e97544e}
-\end{figure}
+\end{figure*}
 
 These three cases carry a simple implication: the large entropy values in
 the \texttt{human\_only} aggregate (Table~\ref{tab:human_vs_varc}) are
@@ -526,7 +526,7 @@ than a fraction of the vote. This is qualitatively different from
 a model that ``almost gets it'': it is a model that has not formed any
 stable hypothesis about what the rule is.
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{qualitative_example.png}
 \caption{A \texttt{human\_only} task (b457fec5).
@@ -537,7 +537,7 @@ prediction (red label).
 Humans produce only 3 distinct final answers (entropy $0.87$); VARC
 scatters across 504 distinct grids (entropy $6.22$).}
 \label{fig:qualitative}
-\end{figure}
+\end{figure*}
 
 \section{Discussion and Conclusion}
 
