@@ -243,6 +243,64 @@ show_task("ad7e01d0", varc_pred=varc_predictions["ad7e01d0"][0], max_humans=10)
 
 ---
 
+## 答案熵分析：人类高度收敛 vs. VARC 极度发散
+
+### 分析思路
+
+我们为每道题分别计算**人类答案分布的熵**与 **VARC 预测分布的熵**，然后寻找"entropy gap"最大的题——即人类几乎全部给出相同答案（熵极低），而 VARC 的 2040 次预测却极度分散（熵极高）的任务。
+
+- **Human entropy**：取每位参与者的最后一次提交，计算答案分布的信息熵（bits）
+- **VARC entropy**：汇总 4 次 attempt 共 2040 次预测，计算预测分布的信息熵
+- **Entropy gap** = VARC entropy − Human entropy
+
+### 散点图：全 400 道题的熵对比
+
+![Entropy Gap Scatter](results/entropy_gap_scatter.png)
+
+图中每个点代表一道题，横轴为人类熵，纵轴为 VARC 熵，颜色区分四象限分类。对角线（y=x）上方的点说明 VARC 比人类更发散；圆圈标出了 entropy gap 最大的 Top 10 题目。
+
+### Top 10：最能说明问题的题目
+
+| task_id | Human entropy | VARC entropy | Entropy gap | Human acc | VARC correct |
+|---|---|---|---|---|---|
+| `ba9d41b8` | ≈ 0 | 10.80 | **10.80** | 100% | ✗ |
+| `d4c90558` | ≈ 0 | 10.12 | **10.12** | 100% | ✗ |
+| `1e97544e` | ≈ 0 | 10.03 | **10.03** | 100% | ✗ |
+| `833dafe3` | 0.47 | 10.77 | 10.31 | 90% | ✓ |
+| `f3cdc58f` | 0.50 | 10.79 | 10.28 | 89% | ✗ |
+| `8dae5dfc` | 0.59 | 10.71 | 10.11 | 86% | ✗ |
+| `dc2e9a9d` | 0.70 | 10.51 | 9.81 | 87% | ✗ |
+| `4b6b68e5` | 0.73 | 10.49 | 9.76 | 86% | ✗ |
+| `94be5b80` | 0.54 | 10.30 | 9.75 | 88% | ✗ |
+| `845d6e51` | 0.50 | 10.24 | 9.74 | 89% | ✗ |
+
+前 3 道题的 human entropy ≈ 0，说明**所有参与者答案完全一致**（且全部正确，human accuracy = 100%）；而 VARC 的 2040 次预测熵高达 10+ bits，接近完全随机。
+
+### 详细可视化：前 3 道题
+
+每张图的布局：
+- **第1–2行**：训练示例（输入/输出）
+- **第3行**：测试输入 + Ground Truth（绿色标题）+ 8 个随机抽取的 VARC 预测样本（红色=错误）
+- **第4行**：人类提交的答案（几乎全部等于 Ground Truth）
+
+#### Task `ba9d41b8`（entropy gap = 10.80 bits，最极端案例）
+
+![ba9d41b8](results/entropy_gap_top3_ba9d41b8.png)
+
+#### Task `d4c90558`（entropy gap = 10.12 bits）
+
+![d4c90558](results/entropy_gap_top3_d4c90558.png)
+
+#### Task `1e97544e`（entropy gap = 10.03 bits）
+
+![1e97544e](results/entropy_gap_top3_1e97544e.png)
+
+### 结论
+
+这 3 道题是整个数据集中"人类认知与 AI 视觉模型之间差距"最为明显的案例：规则对人类来说显然易懂（所有人答案一致且正确），但 VARC 的 2040 次预测却几乎没有任何收敛，说明模型对这类规则的底层表示完全失效。这与前述 Case Study 中 `891232d6` 的"VARC 比人类错得更彻底"模式一脉相承，但程度更极端。
+
+---
+
 ## 资源
 
 ### VARC
