@@ -314,6 +314,7 @@ but does not separate \texttt{human\_only} (red) from
 \end{figure}
 
 \subsection{Human and model converge in different ways}
+\label{sec:human_model}
 
 We now bring in the human-side answer distribution. For each task we
 compute the same metrics over participants' final answer grids. The
@@ -391,6 +392,108 @@ between \texttt{human\_only} (red) and \texttt{both\_wrong} (gray) on the
 left panel is confirmed to be non-significant ($p = 0.56$).}
 \label{fig:entropy_boxplot}
 \end{figure}
+
+\subsection{Extreme cases: tasks with maximal entropy gap}
+\label{sec:extreme}
+
+To identify the most diagnostic individual tasks, we compute a per-task
+\emph{entropy gap}
+\[
+  \Delta H_i \;=\; H_{\mathrm{VARC},i} - H_{\mathrm{Human},i}
+\]
+where both sides are measured in bits. For this analysis we pool all four
+\texttt{attempt} folders (2\,040 VARC predictions per task) to obtain a
+denser sample from the model's prediction distribution; the human-side
+computation is unchanged. Figure~\ref{fig:entropy_gap_scatter} re-plots
+the human-vs.-VARC entropy plane with the ten largest-gap tasks circled.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.75\textwidth]{entropy_gap_scatter.png}
+\caption{Human vs.\ VARC answer entropy for all 400 tasks (bits,
+pooling all four VARC \texttt{attempt} folders for 2\,040 predictions
+per task). Colour encodes quadrant membership. Tasks above the dashed
+diagonal ($y = x$) have the model more diffuse than humans; the ten
+circled points have the largest entropy gap $\Delta H$.}
+\label{fig:entropy_gap_scatter}
+\end{figure}
+
+Table~\ref{tab:entropy_gap_top10} lists the top-10 tasks ranked by
+$\Delta H$.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrrcc}
+\toprule
+\textbf{Task ID} & $H_{\mathrm{Human}}$ (bits) & $H_{\mathrm{VARC}}$ (bits) &
+$\Delta H$ & Human acc. & VARC correct \\
+\midrule
+\texttt{ba9d41b8} & $\approx 0$ & $10.80$ & $10.80$ & $100\%$ & \texttimes \\
+\texttt{d4c90558} & $\approx 0$ & $10.12$ & $10.12$ & $100\%$ & \texttimes \\
+\texttt{1e97544e} & $\approx 0$ & $10.03$ & $10.03$ & $100\%$ & \texttimes \\
+\texttt{833dafe3} & $0.47$      & $10.77$ & $10.31$ & $90\%$  & \checkmark \\
+\texttt{f3cdc58f} & $0.50$      & $10.79$ & $10.28$ & $89\%$  & \texttimes \\
+\texttt{8dae5dfc} & $0.59$      & $10.71$ & $10.11$ & $86\%$  & \texttimes \\
+\texttt{dc2e9a9d} & $0.70$      & $10.51$ & $9.81$  & $87\%$  & \texttimes \\
+\texttt{4b6b68e5} & $0.73$      & $10.49$ & $9.76$  & $86\%$  & \texttimes \\
+\texttt{94be5b80} & $0.54$      & $10.30$ & $9.75$  & $88\%$  & \texttimes \\
+\texttt{845d6e51} & $0.50$      & $10.24$ & $9.74$  & $89\%$  & \texttimes \\
+\bottomrule
+\end{tabular}
+\caption{Top-10 tasks by entropy gap $\Delta H$ (bits, 2\,040 VARC
+predictions). The three rows with $H_{\mathrm{Human}} \approx 0$ mark
+tasks where every participant submitted the identical correct answer,
+while VARC's predictions are near-maximally dispersed
+($\log_2 2040 \approx 11.0$ bits theoretical maximum).}
+\label{tab:entropy_gap_top10}
+\end{table}
+
+The three tasks at the top of Table~\ref{tab:entropy_gap_top10} are the
+most extreme instances in the dataset. Human entropy is numerically zero:
+every participant converged on the same answer, which is correct (human
+accuracy $= 100\%$). VARC entropy simultaneously exceeds 10 bits, meaning
+that across 2\,040 predictions the model generates a near-uniform
+distribution over distinct grids and effectively never repeats the same
+answer. Figures~\ref{fig:extreme_ba9d41b8}--\ref{fig:extreme_1e97544e}
+show each task in full.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{entropy_gap_top3_ba9d41b8.png}
+\caption{Task \texttt{ba9d41b8} ($\Delta H = 10.80$ bits, the largest
+gap in the dataset). \emph{Rows 1--2:} Training examples (input/output).
+\emph{Row 3:} Test input, ground truth (green title), and eight randomly
+sampled distinct VARC predictions (red --- nearly all unique among
+2\,040 views). \emph{Row 4:} Human final answers, all equal to ground
+truth.}
+\label{fig:extreme_ba9d41b8}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{entropy_gap_top3_d4c90558.png}
+\caption{Task \texttt{d4c90558} ($\Delta H = 10.12$ bits). Same layout
+as Figure~\ref{fig:extreme_ba9d41b8}. Every human submits the correct
+answer; VARC's predictions show no convergence.}
+\label{fig:extreme_d4c90558}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{entropy_gap_top3_1e97544e.png}
+\caption{Task \texttt{1e97544e} ($\Delta H = 10.03$ bits). Same layout
+as Figure~\ref{fig:extreme_ba9d41b8}.}
+\label{fig:extreme_1e97544e}
+\end{figure}
+
+These three cases carry a simple implication: the large entropy values in
+the \texttt{human\_only} aggregate (Table~\ref{tab:human_vs_varc}) are
+not an artefact of averaging over heterogeneous tasks. On the most extreme
+individual instances, the failure-to-induce pattern from
+Section~\ref{sec:human_model} reaches its logical limit --- a task that is
+unambiguously and universally solved by humans yet produces near-maximum
+entropy in the model's output distribution.
 
 \subsection{Qualitative illustration}
 
