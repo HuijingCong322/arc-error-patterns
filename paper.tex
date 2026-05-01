@@ -109,7 +109,7 @@ from 946 participants. We restrict to \texttt{task\_type == evaluation}
 throughout and take each participant's \emph{last} attempt as their
 final answer for that task. Table~\ref{tab:data} summarizes the data.
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
 \begin{tabular}{lr}
 \toprule
@@ -202,8 +202,8 @@ misses 111 tasks the human cohort solves, more than twice the size of
 the reverse case. Figure~\ref{fig:task_scatter} visualizes the
 per-task split between the two agents.
 
-\begin{table}[h]
-\centering
+\begin{table*}[t]
+\centering\small
 \begin{tabular}{lrrrr}
 \toprule
  & both\_correct & human\_only & varc\_only & both\_wrong \\
@@ -214,7 +214,7 @@ per-task split between the two agents.
 \caption{Quadrant counts. \texttt{human\_only} is the largest
 disagreement region.}
 \label{tab:quadrants}
-\end{table}
+\end{table*}
 
 \begin{figure}[t]
 \centering
@@ -238,7 +238,7 @@ humans (Figure~\ref{fig:cell_acc_dist}). The model thus tends to land
 near the right structure with mismatched cells, while human errors more
 often replace content wholesale.
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
 \begin{tabular}{lr}
 \toprule
@@ -286,8 +286,8 @@ gets the task right (whether or not humans do), its 510 views agree on
 a small handful of grids; when VARC gets the task wrong, the 510 views
 scatter across hundreds of distinct outputs.
 
-\begin{table}[h]
-\centering
+\begin{table*}[t]
+\centering\small
 \begin{tabular}{lrrrr}
 \toprule
  & top-1 share & top-1/top-2 gap & vote entropy & \# unique grids \\
@@ -303,7 +303,7 @@ share collapses by an order of magnitude on the two model-wrong rows,
 but the two model-wrong rows are nearly indistinguishable from each
 other.}
 \label{tab:varc_view}
-\end{table}
+\end{table*}
 
 Crucially, the VARC view distribution does \emph{not} separate
 \texttt{human\_only} from \texttt{both\_wrong}: the entropy values
@@ -335,8 +335,8 @@ compute the same metrics over participants' final answer grids. The
 results, summarized in Table~\ref{tab:human_vs_varc} and
 Figure~\ref{fig:human_vs_varc}, are striking.
 
-\begin{table}[h]
-\centering
+\begin{table*}[t]
+\centering\small
 \begin{tabular}{lrrrr}
 \toprule
  & VARC top-1 & VARC entropy & Human top-1 & Human entropy \\
@@ -352,7 +352,7 @@ distributions, per quadrant. The \texttt{human\_only} row is the
 defining contrast: humans concentrate (top-1 share 0.74, entropy 0.80)
 while VARC scatters (top-1 share 0.13, entropy 4.72).}
 \label{tab:human_vs_varc}
-\end{table}
+\end{table*}
 
 \begin{figure*}[t]
 \centering
@@ -435,9 +435,8 @@ circled points have the largest entropy gap $\Delta H$.}
 Table~\ref{tab:entropy_gap_top10} lists the top-10 tasks ranked by
 $\Delta H$.
 
-\begin{table}[h]
-\centering
-\small
+\begin{table*}[t]
+\centering\small
 \begin{tabular}{lrrrcc}
 \toprule
 \textbf{Task ID} & $H_{\mathrm{Human}}$ (bits) & $H_{\mathrm{VARC}}$ (bits) &
@@ -461,7 +460,7 @@ tasks where every participant submitted the identical correct answer,
 while VARC's predictions are near-maximally dispersed
 ($\log_2 2040 \approx 11.0$ bits theoretical maximum).}
 \label{tab:entropy_gap_top10}
-\end{table}
+\end{table*}
 
 The three tasks at the top of Table~\ref{tab:entropy_gap_top10} are the
 most extreme instances in the dataset. Human entropy is numerically zero:
