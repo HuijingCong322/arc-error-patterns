@@ -1,21 +1,32 @@
-\documentclass[11pt]{article}
+\documentclass[10pt,letterpaper]{article}
 
-\usepackage[margin=1in]{geometry}
+\usepackage{cogsci}
+\usepackage{pslatex}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{hyperref}
-\usepackage{xcolor}
+\usepackage{url}
 \usepackage{caption}
 \usepackage{subcaption}
 
+\cogscifinalcopy
+
 \graphicspath{{results/}}
 
-\title{Where the Model Wanders and the Mind Converges:\\
+\title{Where the Model Wanders and the Mind Converges: \\
 A Distributional Comparison of Human and VARC Failures on ARC}
-\author{Jing Yu \and Huijing Cong \and Wanyi Zhou}
-\date{\today}
+
+\author{{\large \bf Jing Yu} \\
+  New York University \\
+  \And
+  {\large \bf Huijing Cong} \\
+  New York University \\
+  \And
+  {\large \bf Wanyi Zhou} \\
+  New York University}
+
+\date{}
 
 \begin{document}
 \maketitle
@@ -37,6 +48,9 @@ and VARC entropy is only $0.21$. We argue this signature reflects a
 \emph{failure-to-induce}: rather than picking among a small hypothesis
 set as humans do, the model produces hundreds of pixel-space candidates,
 suggesting it never localizes a rule.
+
+\textbf{Keywords:} ARC; visual reasoning; failure modes; entropy;
+human-AI comparison
 \end{abstract}
 
 \section{Introduction}
