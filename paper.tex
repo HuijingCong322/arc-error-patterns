@@ -23,7 +23,7 @@ A Distributional Comparison of Human and VARC Failures on ARC}
   {\large \bf Huijing Cong} \\
   New York University \\
   \And
-  {\large \bf Wanyi Zhou} \\
+  {\large \bf Elaine Zhou} \\
   New York University}
 
 \date{}
@@ -44,10 +44,9 @@ entropy, top-1 vote share, and number of distinct candidates. On the
 $\approx 3.6$ distinct answers (top-1 share 74\%, entropy $0.80$);
 VARC spreads across $\approx 264$ distinct grids (top-1 share 13\%,
 entropy $4.72$). The correlation between human and VARC entropy is only
-$r = 0.21$. We call this a \emph{failure-to-induce}: rather than
-picking from a small set of candidate rules as humans do, the model
-produces hundreds of different grids, suggesting it never settles on a
-rule.
+$r = 0.21$. We call this a \emph{failure-to-induce}: rather than picking
+among a small hypothesis set as humans do, the model generates hundreds
+of different grids, indicating that it often fails to induce a stable rule.
 
 \textbf{Keywords:} ARC; visual reasoning; failure modes; entropy;
 human-AI comparison
@@ -108,7 +107,7 @@ Table~\ref{tab:data} summarizes the data.
 \toprule
 \textbf{Source} & \textbf{Count} \\
 \midrule
-ARC evaluation tasks & 400 \\
+ARC-1 evaluation tasks & 400 \\
 VARC views per task (\texttt{attempt\_0}) & 510 \\
 H-ARC participants & 946 \\
 H-ARC answers (last attempt per task) & $\approx 10$ per task \\
@@ -149,7 +148,7 @@ $\{g_i\}$ with vote counts $n_i$ (total $N$):
 \text{top-1 share} &= \frac{\max_i n_i}{N},\\
 \text{top-1/top-2 gap} &= \frac{n_{(1)} - n_{(2)}}{N},\\
 H &= -\sum_i \frac{n_i}{N} \log \frac{n_i}{N}
-   \quad\text{(Shannon entropy, nats)},\\
+   \quad\text{(Shannon entropy, in nats)},\\
 n_{\mathrm{unique}} &= |\{g_i\}|.
 \end{align*}
 Both sides use the same units, so the metrics are directly comparable.
@@ -252,6 +251,7 @@ attempts spread across the range, with many low-accuracy submissions.}
 
 \subsection{VARC's view distribution tracks model confidence, not task
 difficulty}
+\label{sec:varc_view_dist}
 
 Looking at VARC alone (Table~\ref{tab:varc_view}), there is a clear
 pattern: when VARC is correct, its 510 views mostly agree on the same
@@ -280,7 +280,7 @@ Importantly, VARC's view spread looks almost the same for
 \texttt{human\_only} and \texttt{both\_wrong}: entropy ($4.72$ vs
 $4.91$) and unique-grid counts ($264$ vs $281$) are nearly identical.
 The model is equally confused on tasks that humans can solve and tasks
-that nobody can solve. This means the model's spread tells us whether
+that humans find difficult. This means the model's spread tells us whether
 the model found an answer --- not whether the task is actually solvable.
 Figure~\ref{fig:view_consistency} shows this: human accuracy varies a
 lot within the high-entropy band, with \texttt{human\_only} (red) and
@@ -336,18 +336,20 @@ VARC in the 100--500 grid regime.}
 
 Two results stand out. First, on \texttt{human\_only} tasks the
 unique-grid count differs by nearly 100$\times$ ($\approx 3.6$
-vs $\approx 264$). Humans don't just do better; they consider a
-completely different number of possible answers. Second,
+vs $\approx 264$). Humans don't just perform better; their responses
+reflect a more consistent interpretation of the underlying rule,
+leading to more similar error patterns. Second,
 \texttt{both\_wrong} tasks show humans also spreading out (entropy
 $1.77$, $\approx 7$ distinct grids) --- but still far less than VARC's
-$\approx 281$ grids. Even when nobody gets it right, the human
-candidate set stays small; the model's does not.
+$\approx 281$ grids. Even when tasks are difficult for both humans and
+the model, the human candidate set stays small; the model's does not.
 
 The Pearson correlation between per-task VARC entropy and human entropy
-is $r = 0.21$ ($p = 3.1 \times 10^{-5}$, $n = 400$). This is small:
-tasks that are hard for humans and tasks that are hard for VARC are
-mostly different tasks. They fail on different things, not the same
-things at different rates.
+is $r = 0.21$ ($p = 3.1 \times 10^{-5}$, $n = 400$), indicating a
+weak association. This means tasks that are hard for humans and tasks
+that are hard for VARC are mostly different tasks. In other words, the
+two systems do not share a common notion of task difficulty, suggesting
+a mismatch in their inductive biases.
 
 The entropy gap on \texttt{human\_only} tasks is statistically robust.
 A Mann-Whitney $U$ test comparing VARC vote entropy vs.\ human entropy
@@ -355,8 +357,9 @@ on \texttt{human\_only} tasks gives $U = 12291$, $p < 10^{-30}$
 (one-sided), with a large effect size (Cohen's $d = 1.92$ relative to
 \texttt{both\_correct}). Importantly, VARC entropy does \emph{not}
 differ significantly between \texttt{human\_only} and
-\texttt{both\_wrong} ($U = 3577$, $p = 0.56$), showing the model's
-confusion does not track whether the task is actually solvable.
+\texttt{both\_wrong} ($U = 3577$, $p = 0.56$), which further suggests
+that the model's uncertainty is not aligned with human-defined task
+difficulty.
 Figure~\ref{fig:entropy_boxplot} shows the full per-quadrant
 distributions.
 
@@ -392,7 +395,8 @@ ten largest-gap tasks circled.
 \includegraphics[width=\columnwidth]{entropy_gap_scatter.png}
 \caption{Human vs.\ VARC entropy for all 400 tasks (2\,040 VARC
 predictions). Tasks above the dashed diagonal have the model more
-diffuse than humans; the ten circled points have the largest $\Delta H$.}
+diffuse than humans; the ten circled points (upper-left corner) have
+the largest $\Delta H$.}
 \label{fig:entropy_gap_scatter}
 \end{figure}
 
@@ -503,9 +507,10 @@ Our main finding is that the two agents are not failing in the same way.
 Human errors --- both on \texttt{human\_only} (when participants
 disagree) and on \texttt{both\_wrong} (when nobody gets it right) ---
 stay within a small set of candidate answers, typically reflecting
-plausible but conflicting transformation rules. VARC's failures are
-nearly spread out over hundreds of grids per task. The model is not
-picking the wrong rule from a short list; there is no short list.
+plausible but competing transformation rules. In contrast, VARC's
+outputs are highly dispersed, spanning hundreds of distinct grids per
+task. It shows that the model lacks a consistent understanding of the
+underlying transformation.
 
 We call this signature \emph{failure-to-induce}. VARC's multi-view
 procedure samples augmented presentations of the same input. A model
@@ -518,12 +523,13 @@ suggests no such rule was ever found.
 
 A natural idea is to use VARC's own view-level spread as a confidence
 signal: low entropy means ``model is confident,'' high entropy means
-``model is confused.'' Section~3.2 shows this signal is real but
-limited: it cleanly separates VARC-correct from VARC-wrong, but cannot
-separate \texttt{human\_only} from \texttt{both\_wrong}. The model is
-equally confused on tasks that humans can solve and on tasks nobody can
-solve. Without the human-side baseline, self-reported model confidence
-does not identify the most important failures.
+``model is confused.'' Section~\ref{sec:varc_view_dist} shows this
+signal is real but limited: it cleanly separates VARC-correct from
+VARC-wrong, but cannot separate \texttt{human\_only} from
+\texttt{both\_wrong}. The model is equally confused on tasks that
+humans can solve and on tasks that humans find difficult. Without the
+human-side baseline, self-reported model confidence does not identify
+the most important failures.
 
 \subsection{Limitations}
 
@@ -531,28 +537,30 @@ Our approach is passive: we use VARC's existing 510 views rather than
 designing controlled input edits (color swaps, rotation, etc.). This
 means we can describe the shape of failure but cannot identify its
 causal source. We also use only the plain-ViT \texttt{attempt\_0}
-configuration; the full ensemble may behave differently. Human entropy
-estimates are limited by the $\approx 10$ participants per task.
+configuration; the full ensemble may exhibit slightly different
+behavior. Human entropy estimates are limited by the $\approx 10$
+participants per task.
 
 \subsection{Future work}
 
-A natural next step is to apply targeted augmentations to the
-\texttt{human\_only} tasks and measure whether any structured change
-sharpens VARC's distribution. Since VARC is already maximally diffuse
-on these tasks, the question is whether \emph{any} intervention helps;
-if not, the failure is not about a specific invariance. Another
-direction is to use the entropy gap as a signal for building harder ARC
-evaluation sets.
+A natural next step is to apply mechanistic causal probing to VARC.
+By combining linear probes to locate relevant layers and then
+intervening on those representations, we can identify where the model
+starts to behave in a human-like way and where it breaks down.
+This could help explain the mismatch between human and model failure
+modes.
 
 \subsection{Conclusion}
 
-On tasks that humans solve but VARC fails on, the two agents fail in
-fundamentally different ways. Humans converge: their final answers
-cluster on a handful of grids, with one clearly dominant choice. VARC
-wanders: its 510 view-level predictions spread across hundreds of
-distinct grids, with no candidate exceeding $13\%$ of the vote. The
-difference is not about precision; it is about \emph{whether a
-hypothesis was ever formed}.
+Our results reveal a qualitative difference beyond accuracy. Human
+errors are structured and convergent: responses cluster around a small
+set of plausible answers, reflecting a shared hypothesis space and
+common inductive biases. In contrast, VARC's errors are highly
+dispersed, spreading across hundreds of grids with little consensus.
+This divergence does not track task difficulty, but instead suggests
+that the model fails to form a coherent hypothesis. Bridging this gap
+may require architectures that explicitly represent and search over
+structured transformation rules.
 
 \begin{thebibliography}{9}
 
