@@ -123,7 +123,7 @@ For VARC we follow the official plain-ViT scoring: keep the top-2
 most-voted grids from 510 views; the task is correct if either matches
 ground truth (pass@2). For humans we use \texttt{human\_accuracy}
 (fraction of participants whose final answer is correct). To assign
-tasks to quadrants in Section~\ref{sec:results}, we call the human
+tasks to quadrants in the Results section, we call the human
 side ``correct'' when \texttt{human\_accuracy} $> 0.5$.
 
 \subsection{Error typing}
@@ -523,7 +523,7 @@ suggests no such rule was ever found.
 
 A natural idea is to use VARC's own view-level spread as a confidence
 signal: low entropy means ``model is confident,'' high entropy means
-``model is confused.'' Section~\ref{sec:varc_view_dist} shows this
+``model is confused.'' The view-level distribution analysis below shows this
 signal is real but limited: it cleanly separates VARC-correct from
 VARC-wrong, but cannot separate \texttt{human\_only} from
 \texttt{both\_wrong}. The model is equally confused on tasks that
